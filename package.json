@@ -1,5 +1,5 @@
 {
-  "name": "zambia-water-map",
+  "name": "zambia-resevoir-monitor",
   "version": "1.0.0",
   "description": "Zambia Reservoir Monitor - powered by Global Water Watch satellite data",
   "main": "dist/server.js",

@@ -4,7 +4,7 @@
  * One-time import script that:
  * 1. Fetches all reservoirs within Zambia's bounding polygon from the Global Water Watch API
  * 2. Calculates a centroid point from each reservoir's MultiPolygon geometry
- * 3. POSTs each reservoir to Re:Earth CMS as an item in the zambia-water-map model
+ * 3. POSTs each reservoir to Re:Earth CMS as an item in the your model of choice
  *
  * Run with: npm run import
  * Expected output: ~400+ reservoirs imported into CMS

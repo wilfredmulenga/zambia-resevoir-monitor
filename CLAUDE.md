@@ -13,7 +13,7 @@ A web app that maps all reservoirs in Zambia and shows surface water area time s
 ## Project structure
 
 ```
-zambia-water-map/
+zambia-resevoir-monitor/
   src/
     server.ts               # Express API server
     types.ts                # Zod schemas + inferred TS types (shared server-side)
