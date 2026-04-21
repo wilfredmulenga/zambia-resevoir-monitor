@@ -56,17 +56,20 @@ CMS_PROJECT_ALIAS=<your-project-alias>
 ## Running the app
 
 Install dependencies:
+
 ```bash
 npm install
 ```
 
 Development (two terminals):
+
 ```bash
 npm run dev:server   # Express on http://localhost:3000
 npm run dev:client   # Vite on http://localhost:5173 (proxies /api to :3000)
 ```
 
 Production:
+
 ```bash
 npm run build        # Vite build → public/, tsc → dist/
 npm start            # Express serves everything on http://localhost:3000
@@ -75,6 +78,7 @@ npm start            # Express serves everything on http://localhost:3000
 ## Architecture
 
 In development, two processes run in parallel:
+
 - Express server on port 3000 (`npm run dev:server`)
 - Vite dev server on port 5173 (`npm run dev:client`) — proxies `/api` to port 3000
 
@@ -107,7 +111,7 @@ In production, Express serves the Vite build from `public/` on port 3000.
 ### 4. React frontend
 
 - **`MapView.tsx`** — MapLibre GL JS map centred on Zambia (`[28.0, -13.5]`, zoom 5.5), OSM raster base. Fetches reservoirs from `/api/reservoirs`, filters with `@turf/boolean-point-in-polygon` against `client/src/data/zambia.ts`, renders as circle layer. Shows loading overlay while fetching. Clicking a circle fires `onReservoirClick(gwwId, name)`.
-- **`Modal.tsx`** — centered overlay with backdrop. Click backdrop or ✕ to close.
+- **`Modal.tsx`** — centered overlay with backdrop. Click backdrop or ✕ to close. Shows a 4-stat bar (current area, historical max, fill level, 12-month trend) computed client-side from the time series before the chart. Trend compares mean of last 12 vs prior 12 observations (±3% threshold); fill level is current ÷ historical max as a percentage.
 - **`TimeSeriesChart.tsx`** — Recharts `LineChart`. X axis is year-denominated (unique ISO date strings as data keys, formatted to year for ticks). Tooltip shows full "Month YYYY". GWW returns `m2` units — converted to `km²` by dividing by 1,000,000.
 
 ## Key decisions and gotchas
@@ -123,4 +127,13 @@ In production, Express serves the Vite build from `public/` on port 3000.
 
 - [ ] Write README.md with setup instructions, environment variables, and how to run
 - [ ] Explore Zambia deforestation tracker using satellite time series (Global Forest Watch / Hansen dataset)
-- [ ] Enrich the reservoir modal — investigate what additional data is available from GWW or other sources (e.g. reservoir capacity, dam name, operator, catchment area, drought/flood alerts)
+- [x] Enrich the reservoir modal — stats bar added (current area, historical max, fill level, 12-month trend), all derived from the existing time series fetch. GWW API explored: metadata is sparse (name sometimes null, no capacity/operator/grand_id for Zambian reservoirs), so no additional API calls needed.
+
+## Future expansion ideas
+
+- **Natural lakes and rivers** — GWW only covers man-made reservoirs; natural water bodies (Bangweulu, Mweru, Tanganyika) are absent. Options:
+  - **JRC Global Surface Water** (EC Joint Research Centre) — tracks surface water extent for all water bodies globally since 1984, available as GeoTIFFs and via Google Earth Engine
+  - **DE Africa WOfS** — Africa-specific Water Observations from Space, publicly available on S3 (`af-south-1`) as Cloud Optimised GeoTIFFs, no auth required (`--no-sign-request`)
+  - Both would enable time series charts for natural lakes identical to the current reservoir modal
+- **Richer map basemap** — switch from OSM raster to a vector tile basemap (e.g. OpenFreeMap, no API key) to get styled rivers and lakes rendered natively on the map
+- **Zambia deforestation tracker** — satellite time series using Global Forest Watch / Hansen dataset
