@@ -2,6 +2,10 @@
 
 A web app that maps all reservoirs in Zambia and shows surface water area time series (1985–present) sourced from [Global Water Watch](https://www.globalwaterwatch.earth) satellite data.
 
+## Use cases
+
+- **Drought early warning** — fill level and 12-month trend shows which reservoirs are critically low ahead of a dry season
+
 ## Features
 
 - Interactive map of ~470 Zambian reservoirs

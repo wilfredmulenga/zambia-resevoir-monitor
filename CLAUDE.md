@@ -137,3 +137,4 @@ In production, Express serves the Vite build from `public/` on port 3000.
   - Both would enable time series charts for natural lakes identical to the current reservoir modal
 - **Richer map basemap** — switch from OSM raster to a vector tile basemap (e.g. OpenFreeMap, no API key) to get styled rivers and lakes rendered natively on the map
 - **Zambia deforestation tracker** — satellite time series using Global Forest Watch / Hansen dataset
+- **Early drought detection for farmers** — alert layer or dashboard highlighting reservoirs with critically low fill levels and declining trends ahead of the dry season
