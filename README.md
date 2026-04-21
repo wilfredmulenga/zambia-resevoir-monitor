@@ -17,7 +17,7 @@ A web app that maps all reservoirs in Zambia and shows surface water area time s
 
 - **Backend**: Node.js + Express + TypeScript
 - **Frontend**: React + Vite + MapLibre GL JS (`@vis.gl/react-maplibre`) + Recharts + Tailwind CSS v4
-- **CMS**: Re:Earth CMS — stores reservoir name, GWW ID, and GeoJSON Point location
+- **CMS**: [Re:Earth CMS](https://cms.reearth.io) — stores reservoir name, GWW ID, and GeoJSON Point location
 - **Data source**: [Global Water Watch API](https://api.globalwaterwatch.earth)
 
 ## Setup
@@ -65,12 +65,32 @@ npm run build   # Vite build → public/, tsc → dist/
 npm start       # Express serves everything on http://localhost:3000
 ```
 
-## CMS import
+## CMS setup
 
-Reservoir data is imported from Global Water Watch into Re:Earth CMS using the import script. Only run this against a fresh/empty CMS model:
+This project uses [Re:Earth CMS](https://cms.reearth.io) to store and serve reservoir data. See the [CMS User Manual](https://eukarya.notion.site/CMS-User-Manual-1ff16e0fb16580869d1efbc9c15aff12) for full documentation.
+
+### 1. Create a model
+
+In your Re:Earth CMS project, create a new model and add the following fields:
+
+| Field key | Type            | Description                        |
+|-----------|-----------------|------------------------------------|
+| `name`    | Text            | Reservoir name                     |
+| `gww_id`  | Integer         | Global Water Watch reservoir ID    |
+| `location`| Geometry Object | GeoJSON Point (centroid location)  |
+
+### 2. Generate an integration token
+
+Go to **Project Settings → Integrations** and create a token. Add it to your `.env` as `CMS_INTEGRATION_TOKEN`.
+
+### 3. Run the import
+
+Populate the model by running the import script against the GWW API. Only run this against a fresh/empty model:
 
 ```bash
 npm run import
 ```
 
-After importing, publish all items in the CMS UI: **Content tab → select all → Publish**.
+### 4. Publish the content
+
+After importing, items are in draft state. Go to **Content tab → select all → Publish** to make them accessible via the public API.
