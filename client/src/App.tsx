@@ -44,7 +44,7 @@ export default function App() {
 
   return (
     <div className="w-full h-full">
-      <MapView onReservoirClick={handleReservoirClick} />
+      <MapView onReservoirClick={handleReservoirClick} selectedGwwId={selected?.gwwId ?? null} />
       {selected && (
         <Modal
           name={selected.name}

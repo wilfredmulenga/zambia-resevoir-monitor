@@ -3,7 +3,7 @@ import { z } from "zod";
 // ── Global Water Watch ────────────────────────────────────────────────────────
 
 export const GWWReservoirSchema = z.object({
-  id: z.number(),
+  id: z.union([z.number(), z.string().transform(Number)]),
   type: z.literal("Feature"),
   geometry: z.object({
     type: z.literal("MultiPolygon"),
@@ -12,7 +12,7 @@ export const GWWReservoirSchema = z.object({
   properties: z.object({
     name: z.string().nullable(),
     name_en: z.string().nullable(),
-    grand_id: z.string().nullable(),
+    grand_id: z.union([z.string(), z.number()]).nullable(),
   }),
 });
 
@@ -49,7 +49,7 @@ export const CMSItemSchema = z.object({
       key: z.string(),
       type: z.string(),
       value: z.unknown(),
-    })
+    }),
   ),
   createdAt: z.string(),
   updatedAt: z.string(),

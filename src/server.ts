@@ -3,9 +3,8 @@
  *
  * Express server that:
  * 1. Serves the static frontend from /public
- * 2. Exposes /api/config so the frontend can read CMS public API settings
- * 3. Proxies /api/reservoirs to the CMS public API (handles pagination)
- * 4. Proxies /api/timeseries/:gwwId to Global Water Watch for on-demand time series data
+ * 2. Proxies /api/reservoirs to the CMS public API (handles pagination)
+ * 3. Proxies /api/timeseries/:gwwId to Global Water Watch for on-demand time series data
  */
 
 import * as dotenv from "dotenv";
@@ -41,17 +40,6 @@ app.use((req, _res, next) => {
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
-});
-
-// ── Config ────────────────────────────────────────────────────────────────────
-
-app.get("/api/config", (_req, res) => {
-  res.json({
-    baseUrl: CMS_CONFIG.baseUrl,
-    workspaceAlias: CMS_CONFIG.workspaceAlias,
-    projectAlias: CMS_CONFIG.projectAlias,
-    modelId: CMS_CONFIG.modelId,
-  });
 });
 
 // ── Reservoirs (all pages from CMS public API) ────────────────────────────────
@@ -118,7 +106,6 @@ app.listen(PORT, () => {
   console.log("");
   console.log("  Endpoints:");
   console.log("    GET /api/health");
-  console.log("    GET /api/config");
   console.log("    GET /api/reservoirs");
   console.log("    GET /api/timeseries/:gwwId");
   console.log("========================================");

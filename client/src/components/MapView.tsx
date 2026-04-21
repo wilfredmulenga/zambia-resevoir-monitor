@@ -5,7 +5,7 @@
  * Calls onReservoirClick with (gwwId, name) when a reservoir marker is clicked.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
@@ -14,13 +14,25 @@ import type { ReservoirsResponse } from "../types";
 
 interface Props {
   onReservoirClick: (gwwId: number, name: string) => void;
+  selectedGwwId: number | null;
 }
 
-export default function MapView({ onReservoirClick }: Props) {
+export default function MapView({ onReservoirClick, selectedGwwId }: Props) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [loading, setLoading] = useState(true);
   const [reservoirCount, setReservoirCount] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer("reservoirs-circle")) return;
+    map.setPaintProperty("reservoirs-circle", "circle-color", [
+      "case",
+      ["==", ["get", "gww_id"], selectedGwwId ?? -1],
+      "#f59e0b",
+      "#38bdf8",
+    ]);
+  }, [selectedGwwId]);
 
   const initMap = useCallback(
     (node: HTMLDivElement | null) => {
@@ -64,7 +76,10 @@ export default function MapView({ onReservoirClick }: Props) {
                 typeof r.location === "string"
                   ? JSON.parse(r.location as string)
                   : r.location;
-              const point = { type: "Point" as const, coordinates: loc.coordinates };
+              const point = {
+                type: "Point" as const,
+                coordinates: loc.coordinates,
+              };
               if (!booleanPointInPolygon(point, zambiaBoundary)) return [];
               return [
                 {
@@ -95,8 +110,10 @@ export default function MapView({ onReservoirClick }: Props) {
                 "interpolate",
                 ["linear"],
                 ["zoom"],
-                4, 3,
-                10, 7,
+                4,
+                3,
+                10,
+                7,
               ],
               "circle-color": "#38bdf8",
               "circle-opacity": 0.85,
@@ -126,12 +143,12 @@ export default function MapView({ onReservoirClick }: Props) {
         } catch (e) {
           setLoading(false);
           setLoadError(
-            e instanceof Error ? e.message : "Failed to load reservoirs"
+            e instanceof Error ? e.message : "Failed to load reservoirs",
           );
         }
       });
     },
-    [onReservoirClick]
+    [onReservoirClick],
   );
 
   return (

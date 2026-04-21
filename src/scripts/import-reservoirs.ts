@@ -7,7 +7,7 @@
  * 3. POSTs each reservoir to Re:Earth CMS as an item in the zambia-water-map model
  *
  * Run with: npm run import
- * Expected output: ~1000+ reservoirs imported into CMS
+ * Expected output: ~400+ reservoirs imported into CMS
  */
 
 import * as dotenv from "dotenv";
@@ -27,11 +27,48 @@ const ZAMBIA_POLYGON = {
   type: "Polygon",
   coordinates: [
     [
-      [21.9, -18.1],
-      [33.7, -18.1],
-      [33.7, -8.2],
-      [21.9, -8.2],
-      [21.9, -18.1],
+      [22.0, -8.4],
+      [22.5, -8.2],
+      [24.0, -8.2],
+      [25.3, -8.4],
+      [26.0, -8.4],
+      [27.0, -8.3],
+      [28.0, -8.4],
+      [29.0, -8.2],
+      [29.5, -8.4],
+      [30.2, -8.5],
+      [31.0, -8.6],
+      [31.5, -8.9],
+      [32.0, -9.1],
+      [32.7, -9.4],
+      [33.2, -9.6],
+      [33.5, -10.0],
+      [33.7, -10.8],
+      [33.7, -11.5],
+      [33.5, -12.3],
+      [33.2, -12.9],
+      [32.9, -13.4],
+      [33.1, -14.0],
+      [33.0, -14.5],
+      [32.6, -15.2],
+      [32.2, -15.8],
+      [31.8, -16.3],
+      [31.2, -16.6],
+      [30.4, -16.1],
+      [30.0, -16.5],
+      [29.5, -17.2],
+      [29.0, -17.7],
+      [28.5, -17.9],
+      [28.0, -18.1],
+      [27.0, -18.1],
+      [26.0, -18.1],
+      [25.3, -17.9],
+      [24.4, -17.5],
+      [23.9, -17.7],
+      [23.3, -17.5],
+      [22.5, -17.4],
+      [22.0, -16.5],
+      [22.0, -8.4],
     ],
   ],
 };
@@ -97,7 +134,7 @@ async function postToCMS(reservoir: GWWReservoir): Promise<void> {
 
   if (!res.ok) {
     throw new Error(
-      `CMS error for reservoir ${reservoir.id}: ${res.status} ${await res.text()}`
+      `CMS error for reservoir ${reservoir.id}: ${res.status} ${await res.text()}`,
     );
   }
 }
@@ -113,7 +150,7 @@ async function main() {
       await postToCMS(r);
       success++;
       console.log(
-        `[CMS] ✓ ${i + 1}/${reservoirs.length} Reservoir #${r.id} (${r.properties.name || "unnamed"})`
+        `[CMS] ✓ ${i + 1}/${reservoirs.length} Reservoir #${r.id} (${r.properties.name || "unnamed"})`,
       );
     } catch (err) {
       failed++;
