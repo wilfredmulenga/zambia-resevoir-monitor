@@ -1,12 +1,7 @@
-/**
- * MapView.tsx
- *
- * MapLibre GL JS map centred on Zambia showing all CMS reservoir points.
- * Calls onReservoirClick with (gwwId, name) when a reservoir marker is clicked.
- */
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import { useState } from "react";
+import { Map, Source, Layer, NavigationControl } from "@vis.gl/react-maplibre";
+import type { MapLayerMouseEvent } from "@vis.gl/react-maplibre";
+import type { CircleLayerSpecification, GeoJSONSourceSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import zambiaBoundary from "../data/zambia";
@@ -17,143 +12,108 @@ interface Props {
   selectedGwwId: number | null;
 }
 
+const MAP_STYLE = {
+  version: 8 as const,
+  sources: {
+    osm: {
+      type: "raster" as const,
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors",
+    },
+  },
+  layers: [{ id: "osm", type: "raster" as const, source: "osm" }],
+};
+
+async function loadReservoirs(): Promise<GeoJSON.FeatureCollection> {
+  const res = await fetch("/api/reservoirs");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data: ReservoirsResponse = await res.json();
+
+  const features = data.results.flatMap((r) => {
+    try {
+      const loc =
+        typeof r.location === "string"
+          ? JSON.parse(r.location as string)
+          : r.location;
+      const point = { type: "Point" as const, coordinates: loc.coordinates };
+      if (!booleanPointInPolygon(point, zambiaBoundary)) return [];
+      return [
+        {
+          type: "Feature" as const,
+          geometry: loc,
+          properties: { name: r.name ?? `Reservoir #${r.gww_id}`, gww_id: r.gww_id },
+        },
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  return { type: "FeatureCollection", features };
+}
+
 export default function MapView({ onReservoirClick, selectedGwwId }: Props) {
-  const mapRef = useRef<maplibregl.Map | null>(null);
+  const [geojson, setGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
   const [loading, setLoading] = useState(true);
-  const [reservoirCount, setReservoirCount] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.getLayer("reservoirs-circle")) return;
-    map.setPaintProperty("reservoirs-circle", "circle-color", [
-      "case",
-      ["==", ["get", "gww_id"], selectedGwwId ?? -1],
-      "#f59e0b",
-      "#38bdf8",
-    ]);
-  }, [selectedGwwId]);
+  async function handleMapLoad() {
+    try {
+      const data = await loadReservoirs();
+      setGeojson(data);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Failed to load reservoirs");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const initMap = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (!node) {
-        mapRef.current?.remove();
-        mapRef.current = null;
-        return;
-      }
+  function handleClick(e: MapLayerMouseEvent) {
+    const f = e.features?.[0];
+    if (!f) return;
+    const { gww_id, name } = f.properties as { gww_id: number; name: string };
+    onReservoirClick(gww_id, name);
+  }
 
-      const map = new maplibregl.Map({
-        container: node,
-        style: {
-          version: 8,
-          sources: {
-            osm: {
-              type: "raster",
-              tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-              tileSize: 256,
-              attribution: "© OpenStreetMap contributors",
-            },
-          },
-          layers: [{ id: "osm", type: "raster", source: "osm" }],
-        },
-        center: [28.0, -13.5],
-        zoom: 5.5,
-      });
-
-      mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl(), "top-left");
-
-      map.on("load", async () => {
-        try {
-          const res = await fetch("/api/reservoirs");
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data: ReservoirsResponse = await res.json();
-          setLoading(false);
-
-          const features = data.results.flatMap((r) => {
-            try {
-              const loc =
-                typeof r.location === "string"
-                  ? JSON.parse(r.location as string)
-                  : r.location;
-              const point = {
-                type: "Point" as const,
-                coordinates: loc.coordinates,
-              };
-              if (!booleanPointInPolygon(point, zambiaBoundary)) return [];
-              return [
-                {
-                  type: "Feature" as const,
-                  geometry: loc,
-                  properties: {
-                    name: r.name ?? `Reservoir #${r.gww_id}`,
-                    gww_id: r.gww_id,
-                  },
-                },
-              ];
-            } catch {
-              return [];
-            }
-          });
-
-          map.addSource("reservoirs", {
-            type: "geojson",
-            data: { type: "FeatureCollection", features },
-          });
-
-          map.addLayer({
-            id: "reservoirs-circle",
-            type: "circle",
-            source: "reservoirs",
-            paint: {
-              "circle-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                4,
-                3,
-                10,
-                7,
-              ],
-              "circle-color": "#38bdf8",
-              "circle-opacity": 0.85,
-              "circle-stroke-width": 1,
-              "circle-stroke-color": "#0f172a",
-            },
-          });
-
-          setReservoirCount(features.length);
-
-          map.on("click", "reservoirs-circle", (e) => {
-            const f = e.features?.[0];
-            if (!f) return;
-            const { gww_id, name } = f.properties as {
-              gww_id: number;
-              name: string;
-            };
-            onReservoirClick(gww_id, name);
-          });
-
-          map.on("mouseenter", "reservoirs-circle", () => {
-            map.getCanvas().style.cursor = "pointer";
-          });
-          map.on("mouseleave", "reservoirs-circle", () => {
-            map.getCanvas().style.cursor = "";
-          });
-        } catch (e) {
-          setLoading(false);
-          setLoadError(
-            e instanceof Error ? e.message : "Failed to load reservoirs",
-          );
-        }
-      });
+  const circleLayer: CircleLayerSpecification = {
+    id: "reservoirs-circle",
+    type: "circle",
+    source: "reservoirs",
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3, 10, 7],
+      "circle-color": [
+        "case",
+        ["==", ["get", "gww_id"], selectedGwwId ?? -1],
+        "#f59e0b",
+        "#38bdf8",
+      ],
+      "circle-opacity": 0.85,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#0f172a",
     },
-    [onReservoirClick],
-  );
+  };
+
+  const reservoirCount = geojson?.features.length ?? null;
 
   return (
     <div className="relative w-full h-full">
-      <div ref={initMap} className="w-full h-full" />
+      <Map
+        initialViewState={{ longitude: 28.0, latitude: -13.5, zoom: 5.5 }}
+        mapStyle={MAP_STYLE}
+        onLoad={handleMapLoad}
+        onClick={handleClick}
+        interactiveLayerIds={geojson ? ["reservoirs-circle"] : []}
+        cursor={undefined}
+        style={{ width: "100%", height: "100%" }}
+      >
+        <NavigationControl position="top-left" />
+        {geojson && (
+          <Source id="reservoirs" type="geojson" data={geojson}>
+            <Layer {...circleLayer} />
+          </Source>
+        )}
+      </Map>
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 pointer-events-none">
