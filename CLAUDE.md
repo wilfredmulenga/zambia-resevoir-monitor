@@ -123,12 +123,6 @@ In production, Express serves the Vite build from `public/` on port 3000.
 - **Callback ref pattern** in `MapView.tsx` — used instead of `useEffect` + `useRef` to avoid null checks. React 18 does not support returning cleanup functions from callback refs; cleanup is handled in the `null` branch instead.
 - **TypeScript configs** — `tsconfig.json` is for the client (ESNext, JSX, noEmit — used by Vite and IDE). `tsconfig.server.json` is for the server build (CommonJS, outDir: dist/). Always pass `--project tsconfig.server.json` to `ts-node` commands.
 
-## TODO
-
-- [ ] Write README.md with setup instructions, environment variables, and how to run
-- [ ] Explore Zambia deforestation tracker using satellite time series (Global Forest Watch / Hansen dataset)
-- [x] Enrich the reservoir modal — stats bar added (current area, historical max, fill level, 12-month trend), all derived from the existing time series fetch. GWW API explored: metadata is sparse (name sometimes null, no capacity/operator/grand_id for Zambian reservoirs), so no additional API calls needed.
-
 ## Future expansion ideas
 
 - **Natural lakes and rivers** — GWW only covers man-made reservoirs; natural water bodies (Bangweulu, Mweru, Tanganyika) are absent. Options:
